@@ -1,0 +1,6 @@
+{
+    "database_ip": "127.0.0.1",
+    "database_port": "29015",
+    "drivers_broker_ip": "127.0.0.1",
+    "drivers_broker_port": "1883"
+}

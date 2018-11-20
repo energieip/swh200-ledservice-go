@@ -1,0 +1,13 @@
+[Unit]
+Description=Led service management
+After=mosquitto.service rethinkdb.service network-online.target
+Wants=network-online.target
+PartOf=rethinkdb.service network-online.target
+
+[Service]
+ExecStart=/usr/bin/ledservice -c /etc/ledservice/config.json
+KillMode=process
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
