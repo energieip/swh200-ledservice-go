@@ -193,6 +193,7 @@ func (s *LedService) Initialize(confFile string) error {
 
 	confDb := database.DatabaseConfig{}
 	confDb.IP = conf.DatabaseIP
+	confDb.Port = conf.DatabasePort
 	err = db.Initialize(confDb)
 	if err != nil {
 		rlog.Error("Cannot connect to database " + err.Error())
