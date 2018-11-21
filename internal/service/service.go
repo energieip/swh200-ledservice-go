@@ -191,9 +191,10 @@ func (s *LedService) Initialize(confFile string) error {
 		return err
 	}
 
-	confDb := database.DatabaseConfig{}
-	confDb.IP = conf.DatabaseIP
-	confDb.Port = conf.DatabasePort
+	confDb := database.DatabaseConfig{
+		IP:   conf.DatabaseIP,
+		Port: conf.DatabasePort,
+	}
 	err = db.Initialize(confDb)
 	if err != nil {
 		rlog.Error("Cannot connect to database " + err.Error())
@@ -219,15 +220,16 @@ func (s *LedService) Initialize(confFile string) error {
 	callbacks := make(map[string]func(client network.Client, msg network.Message))
 	callbacks["/read/led/+/"+driverled.UrlHello] = s.onDriverHello
 	callbacks["/read/led/+/"+driverled.UrlStatus] = s.onDriverStatus
-	callbacks["/write/switch/"+s.mac+"/led/setup/config"] = s.onSetup
-	callbacks["/write/switch/"+s.mac+"/led/update/settings"] = s.onUpdate
+	callbacks["/write/switch/led/setup/config"] = s.onSetup
+	callbacks["/write/switch/led/update/settings"] = s.onUpdate
 
-	confDrivers := network.NetworkConfig{}
-	confDrivers.IP = conf.DriversBrokerIP
-	confDrivers.Port = conf.DriversBrokerPort
-	confDrivers.ClientName = clientID
-	confDrivers.Callbacks = callbacks
-	confDrivers.LogLevel = *conf.LogLevel
+	confDrivers := network.NetworkConfig{
+		IP:         conf.DriversBrokerIP,
+		Port:       conf.DriversBrokerPort,
+		ClientName: clientID,
+		Callbacks:  callbacks,
+		LogLevel:   *conf.LogLevel,
+	}
 	err = driversBroker.Initialize(confDrivers)
 	if err != nil {
 		rlog.Error("Cannot connect to broker " + conf.DriversBrokerIP + " error: " + err.Error())
