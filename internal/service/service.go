@@ -22,50 +22,50 @@ type LedService struct {
 }
 
 func (s *LedService) updateDatabase(led driverled.Led) error {
+	var dbID string
 	if val, ok := s.leds[led.Mac]; ok {
 		led.ID = val.ID
+		dbID = val.ID
 		if *val == led {
 			// No change to register
 			return nil
 		}
-		s.leds[led.Mac] = &led
-		return s.db.UpdateRecord(driverled.DbName, driverled.TableName, led.ID, s.leds[led.Mac].ToMapInterface())
 	}
 
-	var dbID string
 	s.leds[led.Mac] = &led
-	criteria := make(map[string]interface{})
-	criteria["mac"] = led.Mac
-	criteria["switchMac"] = led.SwitchMac
-	ledStored, err := s.db.GetRecord(driverled.DbName, driverled.TableName, criteria)
-	if err != nil || ledStored == nil {
+	if dbID == "" {
 		// Check if the serial already exist in database (case restart process)
-		dbID, err = s.db.InsertRecord(driverled.DbName, driverled.TableName, s.leds[led.Mac].ToMapInterface())
-		if err != nil {
-			return err
-		}
-
-	} else {
-		m := ledStored.(map[string]interface{})
-		id, ok := m["id"]
-		if !ok {
-			id, ok = m["ID"]
-		}
-		if ok {
-			dbID = id.(string)
-			s.leds[led.Mac] = &led
-			err = s.db.UpdateRecord(driverled.DbName, driverled.TableName, dbID, s.leds[led.Mac].ToMapInterface())
-			if err != nil {
-				return err
+		criteria := make(map[string]interface{})
+		criteria["Mac"] = led.Mac
+		criteria["SwitchMac"] = s.mac
+		ledStored, err := s.db.GetRecord(driverled.DbName, driverled.TableName, criteria)
+		if err == nil && ledStored != nil {
+			m := ledStored.(map[string]interface{})
+			id, ok := m["id"]
+			if !ok {
+				id, ok = m["ID"]
+			}
+			if ok {
+				dbID = id.(string)
 			}
 		}
+	}
+	var err error
+
+	if dbID == "" {
+		dbID, err = s.db.InsertRecord(driverled.DbName, driverled.TableName, s.leds[led.Mac])
+	} else {
+		err = s.db.UpdateRecord(driverled.DbName, driverled.TableName, dbID, s.leds[led.Mac])
+	}
+	if err != nil {
+		return err
 	}
 	s.leds[led.Mac].ID = dbID
 	return nil
 }
 
 func (s *LedService) onSetup(client network.Client, msg network.Message) {
-	rlog.Debug("LED service onSetup: Received topic: " + msg.Topic() + " payload: " + string(msg.Payload()[:]))
+	rlog.Debug("LED service onSetup: Received topic: " + msg.Topic() + " payload: " + string(msg.Payload()))
 	var led driverled.LedSetup
 	err := json.Unmarshal(msg.Payload(), &led)
 	if err != nil {
@@ -88,7 +88,7 @@ func (s *LedService) onSetup(client network.Client, msg network.Message) {
 }
 
 func (s *LedService) onUpdate(client network.Client, msg network.Message) {
-	rlog.Debug("LED service update settings: Received topic: " + msg.Topic() + " payload: " + string(msg.Payload()[:]))
+	rlog.Debug("LED service update settings: Received topic: " + msg.Topic() + " payload: " + string(msg.Payload()))
 	var conf driverled.LedConf
 	err := json.Unmarshal(msg.Payload(), &conf)
 	if err != nil {
@@ -100,14 +100,14 @@ func (s *LedService) onUpdate(client network.Client, msg network.Message) {
 		topic = val.Topic
 	} else {
 		criteria := make(map[string]interface{})
-		criteria["mac"] = conf.Mac
-		criteria["switchMac"] = s.mac
+		criteria["Mac"] = conf.Mac
+		criteria["SwitchMac"] = s.mac
 		ledStored, err := s.db.GetRecord(driverled.DbName, driverled.TableName, criteria)
 		if err != nil || ledStored == nil {
 			return
 		}
 		l := ledStored.(map[string]interface{})
-		if url, ok := l["topic"]; ok {
+		if url, ok := l["Topic"]; ok {
 			topic = url.(string)
 		}
 	}
@@ -126,7 +126,7 @@ func (s *LedService) onUpdate(client network.Client, msg network.Message) {
 }
 
 func (s *LedService) onDriverHello(client network.Client, msg network.Message) {
-	rlog.Debug("LED service: Received hello topic: " + msg.Topic() + " payload: " + string(msg.Payload()[:]))
+	rlog.Debug("LED service: Received hello topic: " + msg.Topic() + " payload: " + string(msg.Payload()))
 	var led driverled.Led
 	err := json.Unmarshal(msg.Payload(), &led)
 	if err != nil {
@@ -147,7 +147,7 @@ func (s *LedService) onDriverHello(client network.Client, msg network.Message) {
 
 func (s *LedService) onDriverStatus(client network.Client, msg network.Message) {
 	topic := msg.Topic()
-	rlog.Debug("LED service driver status: Received topic: " + topic + " payload: " + string(msg.Payload()[:]))
+	rlog.Debug("LED service driver status: Received topic: " + topic + " payload: " + string(msg.Payload()))
 	var led driverled.Led
 	err := json.Unmarshal(msg.Payload(), &led)
 	if err != nil {
@@ -205,7 +205,7 @@ func (s *LedService) Initialize(confFile string) error {
 	if err != nil {
 		rlog.Warn("Create DB ", err.Error())
 	}
-	err = s.db.CreateTable(driverled.DbName, driverled.TableName)
+	err = s.db.CreateTable(driverled.DbName, driverled.TableName, &driverled.Led{})
 	if err != nil {
 		rlog.Warn("Create table ", err.Error())
 	}
@@ -237,7 +237,6 @@ func (s *LedService) Initialize(confFile string) error {
 	}
 
 	rlog.Info(clientID + " connected to drivers broker " + conf.DriversBrokerIP)
-
 	rlog.Info("LED service started")
 	return nil
 }
