@@ -6,7 +6,7 @@ PartOf=rethinkdb.service network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/ledservice -c /etc/ledservice/config.json
+ExecStart=/usr/local/bin/energieip-led -c /etc/energieip-led/config.json
 KillMode=process
 PrivateTmp=true
 Restart=always
