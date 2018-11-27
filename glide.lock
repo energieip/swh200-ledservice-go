@@ -1,5 +1,5 @@
 hash: 6276f0859b7d171602c2732d8a94be18904f13d5a3484b66ac830aa13efec415
-updated: 2018-11-27T16:11:39.722134841+01:00
+updated: 2018-11-27T16:38:58.36831513+01:00
 imports:
 - name: github.com/cenkalti/backoff
   version: 62661b46c4093e2c1f38d943e663db1a29873e80
@@ -12,11 +12,11 @@ imports:
   subpackages:
   - pkg/database
 - name: github.com/energieip/common-led-go
-  version: ffac42ae7c18fa1e994a2ed5b6ab2076ab1b5da3
+  version: 20e2729cf61ead34bbd2e604f232ce290cb11352
   subpackages:
   - pkg/driverled
 - name: github.com/energieip/common-network-go
-  version: bace4a82bf2b06b3eff0c115f9bfd0dcc480ae9c
+  version: 8aff99fdd768a5419044500cbcee9660b6944954
   subpackages:
   - pkg/network
 - name: github.com/energieip/swh200-service-go
