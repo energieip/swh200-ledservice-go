@@ -1,6 +1,18 @@
 {
-    "database_ip": "127.0.0.1",
-    "database_port": "29015",
-    "drivers_broker_ip": "127.0.0.1",
-    "drivers_broker_port": "1883"
+    "localBroker": {
+        "ip": "127.0.0.1",
+        "port": "1883"
+    },
+    "networkBroker": {
+        "ip": "",
+        "port": ""
+    },
+    "db": {
+        "clientIp": "127.0.0.1",
+        "clientPort": "29015",
+        "dbCluster": {
+            "connectors": []
+        }
+    },
+    "logLevel": "INFO"
 }
