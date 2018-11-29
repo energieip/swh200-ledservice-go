@@ -8,8 +8,8 @@ import (
 	"github.com/energieip/common-database-go/pkg/database"
 	"github.com/energieip/common-led-go/pkg/driverled"
 	"github.com/energieip/common-network-go/pkg/network"
+	"github.com/energieip/common-tools-go/pkg/tools"
 	"github.com/energieip/swh200-ledservice-go/pkg/config"
-	"github.com/energieip/swh200-ledservice-go/pkg/tools"
 	"github.com/romana/rlog"
 )
 
