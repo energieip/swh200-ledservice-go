@@ -1,6 +1,11 @@
 Switch Service Management for LED drivers
 ========================================
 
+LED Service is responsible for:
+* Getting LED drivers status and storing it to database
+* Sending command to LED drivers
+* Getting command/configuration from the switch core and group services
+
 Build Requirement: 
 * golang-go > 1.9
 * glide
