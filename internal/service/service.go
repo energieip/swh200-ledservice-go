@@ -64,6 +64,29 @@ func (s *LedService) updateDatabase(led driverled.Led) error {
 	return nil
 }
 
+func (s *LedService) getLed(mac string) *driverled.Led {
+	if val, ok := s.leds[mac]; ok {
+		return val
+	}
+	criteria := make(map[string]interface{})
+	criteria["Mac"] = mac
+	criteria["SwitchMac"] = s.mac
+	ledStored, err := s.db.GetRecord(driverled.DbName, driverled.TableName, criteria)
+	if err != nil || ledStored == nil {
+		return nil
+	}
+	light, _ := driverled.ToLed(ledStored)
+	return light
+}
+
+func (s *LedService) getTopic(mac string) string {
+	light := s.getLed(mac)
+	if light != nil {
+		return light.Topic
+	}
+	return ""
+}
+
 func (s *LedService) onSetup(client network.Client, msg network.Message) {
 	rlog.Debug("LED service onSetup: Received topic: " + msg.Topic() + " payload: " + string(msg.Payload()))
 	var led driverled.LedSetup
@@ -72,18 +95,18 @@ func (s *LedService) onSetup(client network.Client, msg network.Message) {
 		rlog.Error("Error during parsing", err.Error())
 		return
 	}
-	val, ok := s.leds[led.Mac]
-	if !ok {
-		rlog.Warn("Cannot send find driver " + led.Mac)
+	topic := s.getTopic(led.Mac)
+	if topic == "" {
+		rlog.Warn("Cannot find driver " + led.Mac)
 		return
 	}
-	url := "/write/" + val.Topic + "/" + driverled.UrlSetup
+	url := "/write/" + topic + "/" + driverled.UrlSetup
 	ledDump, _ := led.ToJSON()
 	err = s.broker.SendCommand(url, ledDump)
 	if err != nil {
 		rlog.Errorf("Cannot send new configuration for driver " + led.Mac + " err: " + err.Error())
 	} else {
-		rlog.Info("New configuration has been sent to " + led.Mac)
+		rlog.Info("New configuration has been sent to " + led.Mac + " on topic: " + url)
 	}
 }
 
@@ -95,23 +118,9 @@ func (s *LedService) onUpdate(client network.Client, msg network.Message) {
 		rlog.Error("Error during parsing", err.Error())
 		return
 	}
-	var topic string
-	if val, ok := s.leds[conf.Mac]; ok {
-		topic = val.Topic
-	} else {
-		criteria := make(map[string]interface{})
-		criteria["Mac"] = conf.Mac
-		criteria["SwitchMac"] = s.mac
-		ledStored, err := s.db.GetRecord(driverled.DbName, driverled.TableName, criteria)
-		if err != nil || ledStored == nil {
-			return
-		}
-		l := ledStored.(map[string]interface{})
-		if url, ok := l["Topic"]; ok {
-			topic = url.(string)
-		}
-	}
+	topic := s.getTopic(conf.Mac)
 	if topic == "" {
+		rlog.Warn("Cannot find driver " + conf.Mac)
 		return
 	}
 
@@ -121,7 +130,7 @@ func (s *LedService) onUpdate(client network.Client, msg network.Message) {
 	if err != nil {
 		rlog.Errorf("Cannot send new configuration to driver " + conf.Mac + " err " + err.Error())
 	} else {
-		rlog.Info("New configuration has been sent to " + conf.Mac)
+		rlog.Info("New configuration has been sent to " + conf.Mac + " on topic: " + topic)
 	}
 }
 
