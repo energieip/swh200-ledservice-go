@@ -101,12 +101,12 @@ func (s *LedService) onSetup(client network.Client, msg network.Message) {
 		return
 	}
 	url := "/write/" + topic + "/" + driverled.UrlSetup
-	ledDump, _ := led.ToJSON()
-	err = s.broker.SendCommand(url, ledDump)
+	dump, _ := led.ToJSON()
+	err = s.broker.SendCommand(url, dump)
 	if err != nil {
 		rlog.Errorf("Cannot send new configuration for driver " + led.Mac + " err: " + err.Error())
 	} else {
-		rlog.Info("New configuration has been sent to " + led.Mac + " on topic: " + url)
+		rlog.Info("New configuration has been sent to " + led.Mac + " on topic: " + url + " dump: " + dump)
 	}
 }
 
@@ -130,7 +130,7 @@ func (s *LedService) onUpdate(client network.Client, msg network.Message) {
 	if err != nil {
 		rlog.Errorf("Cannot send new configuration to driver " + conf.Mac + " err " + err.Error())
 	} else {
-		rlog.Info("New configuration has been sent to " + conf.Mac + " on topic: " + topic)
+		rlog.Info("New update has been sent to " + conf.Mac + " on topic: " + url)
 	}
 }
 
