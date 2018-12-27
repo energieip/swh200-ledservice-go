@@ -1,4 +1,4 @@
-COMPONENT=energieip-led
+COMPONENT=energieip-swh200-led
 
 BINARIES=bin/$(COMPONENT)-armhf bin/$(COMPONENT)-amd64
 
