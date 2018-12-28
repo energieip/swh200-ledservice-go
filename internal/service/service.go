@@ -21,6 +21,25 @@ type LedService struct {
 	mac    string //Switch mac address
 }
 
+type SetupCmd struct {
+	driverled.LedSetup
+	CmdType string `json:"cmdType"`
+}
+
+// ToJSON dump SetupCmd struct
+func (sensor SetupCmd) ToJSON() (string, error) {
+	inrec, err := json.Marshal(sensor)
+	if err != nil {
+		return "", err
+	}
+	return string(inrec[:]), err
+}
+
+type UpdateCmd struct {
+	driverled.LedConf
+	CmdType string `json:"cmdType"`
+}
+
 func (s *LedService) updateDatabase(led driverled.Led) error {
 	var dbID string
 	if val, ok := s.leds[led.Mac]; ok {
@@ -101,7 +120,12 @@ func (s *LedService) onSetup(client network.Client, msg network.Message) {
 		return
 	}
 	url := "/write/" + topic + "/" + driverled.UrlSetup
-	dump, _ := led.ToJSON()
+
+	setupCmd := SetupCmd{}
+	setupCmd.LedSetup = led
+	setupCmd.CmdType = "setup"
+	dump, _ := setupCmd.ToJSON()
+
 	err = s.broker.SendCommand(url, dump)
 	if err != nil {
 		rlog.Errorf("Cannot send new configuration for driver " + led.Mac + " err: " + err.Error())
@@ -125,12 +149,17 @@ func (s *LedService) onUpdate(client network.Client, msg network.Message) {
 	}
 
 	url := "/write/" + topic + "/update/settings"
-	dump, _ := conf.ToJSON()
+
+	setupCmd := UpdateCmd{}
+	setupCmd.LedConf = conf
+	setupCmd.CmdType = "update"
+	dump, _ := setupCmd.ToJSON()
+
 	err = s.broker.SendCommand(url, dump)
 	if err != nil {
 		rlog.Errorf("Cannot send new configuration to driver " + conf.Mac + " err " + err.Error())
 	} else {
-		rlog.Info("New update has been sent to " + conf.Mac + " on topic: " + url)
+		rlog.Info("New update has been sent to " + conf.Mac + " on topic: " + url + " dump: " + dump)
 	}
 }
 
