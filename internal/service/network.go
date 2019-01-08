@@ -8,36 +8,6 @@ import (
 	"github.com/romana/rlog"
 )
 
-//SetupCmd setup command
-type SetupCmd struct {
-	driverled.LedSetup
-	CmdType string `json:"cmdType"`
-}
-
-// ToJSON dump SetupCmd struct
-func (led SetupCmd) ToJSON() (string, error) {
-	inrec, err := json.Marshal(led)
-	if err != nil {
-		return "", err
-	}
-	return string(inrec[:]), err
-}
-
-//UpdateCmd update command
-type UpdateCmd struct {
-	driverled.LedConf
-	CmdType string `json:"cmdType"`
-}
-
-// ToJSON dump UpdateCmd struct
-func (led UpdateCmd) ToJSON() (string, error) {
-	inrec, err := json.Marshal(led)
-	if err != nil {
-		return "", err
-	}
-	return string(inrec[:]), err
-}
-
 func (s *LedService) onSetup(client network.Client, msg network.Message) {
 	rlog.Info("LED service onSetup: Received topic: " + msg.Topic() + " payload: " + string(msg.Payload()))
 	var led driverled.LedSetup
@@ -46,13 +16,9 @@ func (s *LedService) onSetup(client network.Client, msg network.Message) {
 		rlog.Error("Error during parsing", err.Error())
 		return
 	}
-	topic := "led/" + led.Mac
-	url := "/write/" + topic + "/" + driverled.UrlSetup
+	url := "/write/led/" + led.Mac + "/" + driverled.UrlSetup
 
-	setupCmd := SetupCmd{}
-	setupCmd.LedSetup = led
-	setupCmd.CmdType = "setup"
-	dump, _ := setupCmd.ToJSON()
+	dump, _ := led.ToJSON()
 
 	err = s.broker.SendCommand(url, dump)
 	if err != nil {
@@ -71,13 +37,8 @@ func (s *LedService) onUpdate(client network.Client, msg network.Message) {
 		return
 	}
 
-	topic := "led/" + conf.Mac
-	url := "/write/" + topic + "/update/settings"
-
-	setupCmd := UpdateCmd{}
-	setupCmd.LedConf = conf
-	setupCmd.CmdType = "update"
-	dump, _ := setupCmd.ToJSON()
+	url := "/write/led/" + conf.Mac + "/update/settings"
+	dump, _ := conf.ToJSON()
 
 	err = s.broker.SendCommand(url, dump)
 	if err != nil {
@@ -99,7 +60,6 @@ func (s *LedService) onDriverHello(client network.Client, msg network.Message) {
 	led.IsConfigured = false
 	led.Protocol = "MQTT"
 	led.SwitchMac = s.mac
-	// led.Mac = strings.Replace(led.Mac, ":", "", -1)
 	err = s.updateDatabase(led)
 	if err != nil {
 		rlog.Error("Error during database update ", err.Error())
@@ -119,7 +79,6 @@ func (s *LedService) onDriverStatus(client network.Client, msg network.Message) 
 	}
 	led.SwitchMac = s.mac
 	led.Protocol = "MQTT"
-	// led.Mac = strings.Replace(led.Mac, ":", "", -1)
 	err = s.updateDatabase(led)
 	if err != nil {
 		rlog.Error("Error during database update ", err.Error())
