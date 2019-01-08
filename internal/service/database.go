@@ -59,11 +59,3 @@ func (s *LedService) getLed(mac string) *driverled.Led {
 	light, _ := driverled.ToLed(ledStored)
 	return light
 }
-
-func (s *LedService) getTopic(mac string) string {
-	light := s.getLed(mac)
-	if light != nil {
-		return light.Topic
-	}
-	return ""
-}

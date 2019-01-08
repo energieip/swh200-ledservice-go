@@ -2,7 +2,6 @@ package service
 
 import (
 	"encoding/json"
-	"strings"
 
 	"github.com/energieip/common-led-go/pkg/driverled"
 	"github.com/energieip/common-network-go/pkg/network"
@@ -40,18 +39,14 @@ func (led UpdateCmd) ToJSON() (string, error) {
 }
 
 func (s *LedService) onSetup(client network.Client, msg network.Message) {
-	rlog.Debug("LED service onSetup: Received topic: " + msg.Topic() + " payload: " + string(msg.Payload()))
+	rlog.Info("LED service onSetup: Received topic: " + msg.Topic() + " payload: " + string(msg.Payload()))
 	var led driverled.LedSetup
 	err := json.Unmarshal(msg.Payload(), &led)
 	if err != nil {
 		rlog.Error("Error during parsing", err.Error())
 		return
 	}
-	topic := s.getTopic(led.Mac)
-	if topic == "" {
-		rlog.Warn("Cannot find driver " + led.Mac)
-		return
-	}
+	topic := "led/" + led.Mac
 	url := "/write/" + topic + "/" + driverled.UrlSetup
 
 	setupCmd := SetupCmd{}
@@ -68,19 +63,15 @@ func (s *LedService) onSetup(client network.Client, msg network.Message) {
 }
 
 func (s *LedService) onUpdate(client network.Client, msg network.Message) {
-	rlog.Debug("LED service update settings: Received topic: " + msg.Topic() + " payload: " + string(msg.Payload()))
+	rlog.Info("LED service update settings: Received topic: " + msg.Topic() + " payload: " + string(msg.Payload()))
 	var conf driverled.LedConf
 	err := json.Unmarshal(msg.Payload(), &conf)
 	if err != nil {
 		rlog.Error("Error during parsing", err.Error())
 		return
 	}
-	topic := s.getTopic(conf.Mac)
-	if topic == "" {
-		rlog.Warn("Cannot find driver " + conf.Mac)
-		return
-	}
 
+	topic := "led/" + conf.Mac
 	url := "/write/" + topic + "/update/settings"
 
 	setupCmd := UpdateCmd{}
@@ -97,7 +88,7 @@ func (s *LedService) onUpdate(client network.Client, msg network.Message) {
 }
 
 func (s *LedService) onDriverHello(client network.Client, msg network.Message) {
-	rlog.Debug("LED service: Received hello topic: " + msg.Topic() + " payload: " + string(msg.Payload()))
+	rlog.Info("LED service: Received hello topic: " + msg.Topic() + " payload: " + string(msg.Payload()))
 	var led driverled.Led
 	err := json.Unmarshal(msg.Payload(), &led)
 	if err != nil {
@@ -108,6 +99,7 @@ func (s *LedService) onDriverHello(client network.Client, msg network.Message) {
 	led.IsConfigured = false
 	led.Protocol = "MQTT"
 	led.SwitchMac = s.mac
+	// led.Mac = strings.Replace(led.Mac, ":", "", -1)
 	err = s.updateDatabase(led)
 	if err != nil {
 		rlog.Error("Error during database update ", err.Error())
@@ -118,7 +110,7 @@ func (s *LedService) onDriverHello(client network.Client, msg network.Message) {
 
 func (s *LedService) onDriverStatus(client network.Client, msg network.Message) {
 	topic := msg.Topic()
-	rlog.Debug("LED service driver status: Received topic: " + topic + " payload: " + string(msg.Payload()))
+	rlog.Info("LED service driver status: Received topic: " + topic + " payload: " + string(msg.Payload()))
 	var led driverled.Led
 	err := json.Unmarshal(msg.Payload(), &led)
 	if err != nil {
@@ -127,8 +119,7 @@ func (s *LedService) onDriverStatus(client network.Client, msg network.Message) 
 	}
 	led.SwitchMac = s.mac
 	led.Protocol = "MQTT"
-	topics := strings.Split(topic, "/")
-	led.Topic = topics[2] + "/" + topics[3]
+	// led.Mac = strings.Replace(led.Mac, ":", "", -1)
 	err = s.updateDatabase(led)
 	if err != nil {
 		rlog.Error("Error during database update ", err.Error())
