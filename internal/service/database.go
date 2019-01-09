@@ -19,7 +19,7 @@ func (s *LedService) updateDatabase(led driverled.Led) error {
 		criteria := make(map[string]interface{})
 		criteria["Mac"] = led.Mac
 		criteria["SwitchMac"] = s.mac
-		ledStored, err := s.db.GetRecord(driverled.DbName, driverled.TableName, criteria)
+		ledStored, err := s.db.GetRecord(driverled.DbStatus, driverled.TableName, criteria)
 		if err == nil && ledStored != nil {
 			m := ledStored.(map[string]interface{})
 			id, ok := m["id"]
@@ -34,9 +34,9 @@ func (s *LedService) updateDatabase(led driverled.Led) error {
 	var err error
 
 	if dbID == "" {
-		dbID, err = s.db.InsertRecord(driverled.DbName, driverled.TableName, s.leds[led.Mac])
+		dbID, err = s.db.InsertRecord(driverled.DbStatus, driverled.TableName, s.leds[led.Mac])
 	} else {
-		err = s.db.UpdateRecord(driverled.DbName, driverled.TableName, dbID, s.leds[led.Mac])
+		err = s.db.UpdateRecord(driverled.DbStatus, driverled.TableName, dbID, s.leds[led.Mac])
 	}
 	if err != nil {
 		return err
@@ -52,7 +52,7 @@ func (s *LedService) getLed(mac string) *driverled.Led {
 	criteria := make(map[string]interface{})
 	criteria["Mac"] = mac
 	criteria["SwitchMac"] = s.mac
-	ledStored, err := s.db.GetRecord(driverled.DbName, driverled.TableName, criteria)
+	ledStored, err := s.db.GetRecord(driverled.DbStatus, driverled.TableName, criteria)
 	if err != nil || ledStored == nil {
 		return nil
 	}

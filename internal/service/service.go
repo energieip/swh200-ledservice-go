@@ -53,11 +53,11 @@ func (s *LedService) Initialize(confFile string) error {
 		return err
 	}
 	s.db = db
-	err = s.db.CreateDB(driverled.DbName)
+	err = s.db.CreateDB(driverled.DbStatus)
 	if err != nil {
 		rlog.Warn("Create DB ", err.Error())
 	}
-	err = s.db.CreateTable(driverled.DbName, driverled.TableName, &driverled.Led{})
+	err = s.db.CreateTable(driverled.DbStatus, driverled.TableName, &driverled.Led{})
 	if err != nil {
 		rlog.Warn("Create table ", err.Error())
 	}
@@ -76,11 +76,15 @@ func (s *LedService) Initialize(confFile string) error {
 	callbacks["/write/switch/led/update/settings"] = s.onUpdate
 
 	confDrivers := network.NetworkConfig{
-		IP:         conf.LocalBroker.IP,
-		Port:       conf.LocalBroker.Port,
-		ClientName: clientID,
-		Callbacks:  callbacks,
-		LogLevel:   conf.LogLevel,
+		IP:               conf.LocalBroker.IP,
+		Port:             conf.LocalBroker.Port,
+		ClientName:       clientID,
+		Callbacks:        callbacks,
+		LogLevel:         conf.LogLevel,
+		User:             conf.LocalBroker.Login,
+		Password:         conf.LocalBroker.Password,
+		ClientKey:        conf.LocalBroker.KeyPath,
+		ServerCertificat: conf.LocalBroker.CaPath,
 	}
 	err = driversBroker.Initialize(confDrivers)
 	if err != nil {
