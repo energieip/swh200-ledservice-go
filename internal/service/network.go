@@ -58,7 +58,6 @@ func (s *LedService) onDriverHello(client network.Client, msg network.Message) {
 	}
 
 	led.IsConfigured = false
-	led.Protocol = "MQTT"
 	led.SwitchMac = s.mac
 	err = s.updateDatabase(led)
 	if err != nil {
@@ -78,7 +77,6 @@ func (s *LedService) onDriverStatus(client network.Client, msg network.Message) 
 		return
 	}
 	led.SwitchMac = s.mac
-	led.Protocol = "MQTT"
 	err = s.updateDatabase(led)
 	if err != nil {
 		rlog.Error("Error during database update ", err.Error())
