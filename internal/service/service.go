@@ -25,7 +25,8 @@ func (s *LedService) Initialize(confFile string) error {
 	s.leds = make(map[string]*driverled.Led)
 	hostname, _ := os.Hostname()
 	clientID := "LED" + hostname
-	s.mac = strings.ToUpper(strings.Replace(tools.GetMac(), ":", "", -1))
+	mac := tools.GetMac()
+	s.mac = strings.ToUpper(mac[9:])
 
 	conf, err := pkg.ReadServiceConfig(confFile)
 	if err != nil {
